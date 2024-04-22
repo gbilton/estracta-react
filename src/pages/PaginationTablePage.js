@@ -6,7 +6,7 @@ import PaginationTable from "../components/PaginationTable";
 
 function PaginationTablePage() {
   return (
-    <Container sx={{ backgroundColor: "blue" }}>
+    <Container>
       <Box
         height={"100vh"}
         display={"flex"}
