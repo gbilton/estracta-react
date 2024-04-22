@@ -13,48 +13,34 @@ import TableSortLabel from "@mui/material/TableSortLabel";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { visuallyHidden } from "@mui/utils";
 import axios from "axios";
 
-function createData(id, name, calories, fat, carbs, protein) {
+function createData(id, cnpj, nome_razao, nome_fantasia, cnae) {
   return {
     id,
-    name,
-    calories,
-    fat,
-    carbs,
-    protein,
+    cnpj,
+    nome_razao,
+    nome_fantasia,
+    cnae,
   };
 }
 
-const getCompanies = () => {
-  try {
-    const result = axios.get("http://localhost:5000/companies");
-    return result.data;
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-};
-
-const rows = [
-  createData(1, "Cupcake", 305, 3.7, 67, 4.3),
-  createData(2, "Donut", 452, 25.0, 51, 4.9),
-  createData(3, "Eclair", 262, 16.0, 24, 6.0),
-  createData(4, "Frozen yoghurt", 159, 6.0, 24, 4.0),
-  createData(5, "Gingerbread", 356, 16.0, 49, 3.9),
-  createData(6, "Honeycomb", 408, 3.2, 87, 6.5),
-  createData(7, "Ice cream sandwich", 237, 9.0, 37, 4.3),
-  createData(8, "Jelly Bean", 375, 0.0, 94, 0.0),
-  createData(9, "KitKat", 518, 26.0, 65, 7.0),
-  createData(10, "Lollipop", 392, 0.2, 98, 0.0),
-  createData(11, "Marshmallow", 318, 0, 81, 2.0),
-  createData(12, "Nougat", 360, 19.0, 9, 37.0),
-  createData(13, "Oreo", 437, 18.0, 63, 4.0),
-];
+// const rows = [
+//   createData(1, "Cupcake", 305, 3.7, 67, 4.3),
+//   createData(2, "Donut", 452, 25.0, 51, 4.9),
+//   createData(3, "Eclair", 262, 16.0, 24, 6.0),
+//   createData(4, "Frozen yoghurt", 159, 6.0, 24, 4.0),
+//   createData(5, "Gingerbread", 356, 16.0, 49, 3.9),
+//   createData(6, "Honeycomb", 408, 3.2, 87, 6.5),
+//   createData(7, "Ice cream sandwich", 237, 9.0, 37, 4.3),
+//   createData(8, "Jelly Bean", 375, 0.0, 94, 0.0),
+//   createData(9, "KitKat", 518, 26.0, 65, 7.0),
+//   createData(10, "Lollipop", 392, 0.2, 98, 0.0),
+//   createData(11, "Marshmallow", 318, 0, 81, 2.0),
+//   createData(12, "Nougat", 360, 19.0, 9, 37.0),
+//   createData(13, "Oreo", 437, 18.0, 63, 4.0),
+// ];
 
 function descendingComparator(a, b, orderBy) {
   if (b[orderBy] < a[orderBy]) {
@@ -113,12 +99,11 @@ const headCells = [
     disablePadding: false,
     label: "CNAE",
   },
-  {
-    id: "protein",
-    numeric: true,
-    disablePadding: false,
-    label: "Protein (g)",
-  },
+  // { id: "protein",
+  //   numeric: true,
+  //   disablePadding: false,
+  //   label: "Protein (g)",
+  // },
 ];
 
 function EnhancedTableHead(props) {
@@ -159,7 +144,6 @@ function EnhancedTableHead(props) {
 EnhancedTableHead.propTypes = {
   numSelected: PropTypes.number.isRequired,
   onRequestSort: PropTypes.func.isRequired,
-  onSelectAllClick: PropTypes.func.isRequired,
   order: PropTypes.oneOf(["asc", "desc"]).isRequired,
   orderBy: PropTypes.string.isRequired,
   rowCount: PropTypes.number.isRequired,
@@ -201,20 +185,6 @@ function EnhancedTableToolbar(props) {
           Empresas
         </Typography>
       )}
-
-      {numSelected > 0 ? (
-        <Tooltip title="Delete">
-          <IconButton>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title="Filter list">
-          <IconButton>
-            <FilterListIcon />
-          </IconButton>
-        </Tooltip>
-      )}
     </Toolbar>
   );
 }
@@ -229,10 +199,36 @@ export default function EnhancedTable() {
   const [selected, setSelected] = React.useState([]);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
+  const [rows, setRows] = React.useState([]);
 
   React.useEffect(() => {
-    getCompanies();
+    const getCompanies = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/companies");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    getCompanies()
+      .then((companies) => {
+        setRows(
+          companies.map((company) =>
+            createData(
+              company.id,
+              company.cnpj,
+              company.nome_razao,
+              company.nome_fantasia,
+              company.cnae
+            )
+          )
+        );
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }, []);
+
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -279,7 +275,7 @@ export default function EnhancedTable() {
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage
       ),
-    [order, orderBy, page, rowsPerPage]
+    [rows, order, orderBy, page, rowsPerPage]
   );
 
   return (
@@ -319,14 +315,13 @@ export default function EnhancedTable() {
                       component="th"
                       id={labelId}
                       scope="row"
-                      padding="2rem"
+                      padding="normal"
                     >
-                      {row.name}
+                      {row.cnpj}
                     </TableCell>
-                    <TableCell align="center">{row.calories}</TableCell>
-                    <TableCell align="center">{row.fat}</TableCell>
-                    <TableCell align="center">{row.carbs}</TableCell>
-                    <TableCell align="center">{row.protein}</TableCell>
+                    <TableCell align="center">{row.nome_razao}</TableCell>
+                    <TableCell align="center">{row.nome_fantasia}</TableCell>
+                    <TableCell align="center">{row.cnae}</TableCell>
                   </TableRow>
                 );
               })}
